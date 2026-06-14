@@ -112,9 +112,8 @@ For each tool, describe the specific failure mode you're handling and what the a
      sketch are all fine. You'll share this diagram with an AI tool when asking it to implement
      the planning loop and each individual tool. -->
 ---
-config:
-  theme: neo
----
+
+```mermaid
 flowchart TD
     User([User Prompt]) -->|Triggers run_agent| PL[Planning Loop <br> agent.py]
     State[("Session State <br> {session dict}")] <-->|Read / Write State| PL
@@ -140,7 +139,8 @@ flowchart TD
     class State state;
     class E1 error;
     class C1 logic;
-     
+```
+
 ---
 
 ## AI Tool Plan
@@ -158,9 +158,16 @@ flowchart TD
 
 **Milestone 3 — Individual tool implementations:**
 
+I'll give Claude my Tool 1 search_listings("vintage graphic tee", size="M", max_price=30.0) and ask it to implement search_listings() using load_listings() from the data loader — then test it against 3 queries
+before trusting it - while trying to test out edge cases".
 
+I'll give Claude my Tool 2 to implement suggest_outfit(new_item, wardrobe). I will provide the required system prompt guidelines and explicitly tell it to handle an empty wardrobe case by generating general styling advice that makes sense. I'll verify it by passing a valid item alongside a completely empty wardrobe to ensure the LLM handles it gracefully and returns a helpful text response instead of throwing a KeyError.
+
+I'll give Claude my Tool 3 spec to implement create_fit_card(outfit, new_item) using the Groq LLM to generate short, casual, social media captions. I will tell it to include a defensive check that catches empty input strings and returns a clean error string. I'll verify the output by running the function three times in a row with the exact same inputs to make sure the LLM configuration is set correctly to give me distinct, creative captions every time that align with the information that is passed into it from the previous steps.
 
 **Milestone 4 — Planning loop and state management:**
+
+I'll give Claude my text-based Mermaid architecture diagram and the planning loop conditional branching details from this planning.md file. I'll ask it to help me implement the run_agent() function in agent.py to manage the execution flow and sequentially update the session dictionary. I'll verify the code line-by-line to guarantee that it checks the search_listings output first and entirely skips calling suggest_outfit if no matching items are found, saving an error message to the session state instead. And then checking the successful and error outputs for the suggest_outfit() and create_fit_card().
 
 ---
 
