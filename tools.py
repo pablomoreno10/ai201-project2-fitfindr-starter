@@ -69,8 +69,32 @@ def search_listings(
 
     Before writing code, fill in the Tool 1 section of planning.md.
     """
-    # Replace this with your implementation
-    return []
+    listings = load_listings()
+    filtered = listings
+
+    if max_price is not None:
+        filtered = [l for l in filtered if l.get('price', 0.0) <= max_price]
+        
+    if size is not None:
+        size_lower = size.lower()
+        filtered = [l for l in filtered if l.get('size', '') and size_lower in l['size'].lower()]
+
+    keywords = description.lower().split()
+    if not keywords:
+        return []  
+
+    scored = []
+    for listing in filtered:
+        searchable_text = f"{listing.get('title', '')} {listing.get('description', '')} {' '.join(listing.get('style_tags', []))}".lower()
+
+        score = sum(1 for kw in keywords if kw in searchable_text)
+        
+        if score > 0:
+            scored.append((score, listing))
+
+    scored.sort(key=lambda x: x[0], reverse=True)
+    
+    return [listing for score, listing in scored]
 
 
 # ── Tool 2: suggest_outfit ────────────────────────────────────────────────────
@@ -100,8 +124,67 @@ def suggest_outfit(new_item: dict, wardrobe: dict) -> str:
 
     Before writing code, fill in the Tool 2 section of planning.md.
     """
-    # Replace this with your implementation
-    return ""
+
+    client = _get_groq_client()
+    item_title = new_item.get('title', 'Unknown Item')
+    item_desc = new_item.get('description', '')
+    item_brand = new_item.get('brand', 'Generic')
+    item_size = new_item.get('size', 'N/A')
+    item_price = new_item.get('price', 'N/A')
+    item_tags = ", ".join(new_item.get('style_tags', []))
+    item_colors = ", ".join(new_item.get('colors', []))
+
+    item_summary = (
+        f"Item: {item_title}\n"
+        f"Description: {item_desc}\n"
+        f"Brand: {item_brand} | Size: {item_size} | Price: ${item_price}\n"
+        f"Colors: {item_colors} | Style Tags: {item_tags}"
+    )
+    wardrobe_items = wardrobe.get('items', [])
+
+    if not wardrobe_items:
+        system_prompt = (
+            "You are an expert personal stylist specializing in streetwear, sustainable fashion, and vintage trends. "
+            "The user wants styling ideas for a secondhand item they found, but their digital wardrobe is empty. "
+            "Provide creative, general styling advice. Suggest what types of garments, silhouettes, textures, and footwear "
+            "would complement this piece. Keep the tone conversational, helpful, and concise (1-2 short paragraphs)."
+        )
+        user_prompt = f"Here is the item I found:\n\n{item_summary}"
+    else:
+        wardrobe_lines = []
+        for item in wardrobe_items:
+            w_title = item.get('title', 'Untitled Piece')
+            w_cat = item.get('category', 'Clothing')
+            w_colors = ", ".join(item.get('colors', [])) if isinstance(item.get('colors'), list) else "N/A"
+            wardrobe_lines.append(f"- {w_title} ({w_cat}, Color: {w_colors})")
+        
+        wardrobe_summary = "\n".join(wardrobe_lines)
+
+        system_prompt = (
+            "You are an expert personal stylist. Create 1-2 distinct, complete outfit combinations "
+            "by pairing the new item explicitly with named pieces from the user's wardrobe. "
+            "Explain the overall aesthetic vibe of the look (e.g., 90s grunge, retro athletic, minimal chic). "
+            "Be highly specific and practical. Use the exact names of items from their wardrobe."
+        )
+        user_prompt = (
+            f"Here is the new item I want to buy:\n\n{item_summary}\n\n"
+            f"Here is my current wardrobe:\n{wardrobe_summary}"
+        )
+
+    try:
+        completion = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            temperature=0.7,
+            max_tokens=400
+        )
+        return completion.choices[0].message.content.strip()
+    except Exception as e:
+        # Catch errors gracefully as requested by the spec
+        return f"Styling service temporarily unavailable. (Error: {str(e)})"
 
 
 # ── Tool 3: create_fit_card ───────────────────────────────────────────────────
@@ -133,5 +216,47 @@ def create_fit_card(outfit: str, new_item: dict) -> str:
 
     Before writing code, fill in the Tool 3 section of planning.md.
     """
-    # Replace this with your implementation
-    return ""
+
+    if not outfit or not outfit.strip():
+        return "Error: Cannot generate a fit card because the outfit suggestion is missing or empty."
+    
+    client = _get_groq_client()
+
+    item_title = new_item.get('title', 'this piece')
+    item_price = new_item.get('price', 'unpriced')
+    item_platform = new_item.get('platform', 'thrift shop')
+
+    if isinstance(item_price, (int, float)):
+        price_str = f"${item_price:.2f}" if item_price % 1 != 0 else f"${int(item_price)}"
+    else:
+        price_str = str(item_price)
+
+    system_prompt = (
+        "You are a trendy social media manager writing a casual, authentic outfit caption for Instagram/TikTok. "
+        "Keep it to exactly 2-4 sentences. Avoid sounding like a dry product description or corporate advertisement. "
+        "Use modern, casual syntax (lowercase styling, minimal punctuation, or an emoji is fine, but don't overdo it). "
+        "CRITICAL RULES:\n"
+        f"1. You MUST mention the item name ('{item_title}') exactly once.\n"
+        f"2. You MUST mention the price ('{price_str}') exactly once.\n"
+        f"3. You MUST mention the platform it was found on ('{item_platform}') exactly once.\n"
+        "Do not include any introductory meta-text like 'Here is your caption:'—return ONLY the final caption."
+    )
+
+    user_prompt = (
+        f"The outfit combination is:\n{outfit}\n\n"
+        f"The main item details are:\nItem: {item_title} | Price: {price_str} | Platform: {item_platform}"
+    )
+
+    try:
+        completion = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            temperature=0.9,  
+            max_tokens=150
+        )
+        return completion.choices[0].message.content.strip()
+    except Exception as e:
+        return f"Caption generator temporarily unavailable. (Error: {str(e)})"

@@ -158,8 +158,7 @@ flowchart TD
 
 **Milestone 3 — Individual tool implementations:**
 
-I'll give Claude my Tool 1 search_listings("vintage graphic tee", size="M", max_price=30.0) and ask it to implement search_listings() using load_listings() from the data loader — then test it against 3 queries
-before trusting it - while trying to test out edge cases".
+I'll give Claude my Tool 1 search_listings("vintage graphic tee", size="M", max_price=30.0) and ask it to implement search_listings() using load_listings() from the data loader — then test it against 3 queries before trusting it - while trying to test out edge cases".
 
 I'll give Claude my Tool 2 to implement suggest_outfit(new_item, wardrobe). I will provide the required system prompt guidelines and explicitly tell it to handle an empty wardrobe case by generating general styling advice that makes sense. I'll verify it by passing a valid item alongside a completely empty wardrobe to ensure the LLM handles it gracefully and returns a helpful text response instead of throwing a KeyError.
 
