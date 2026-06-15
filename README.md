@@ -2,6 +2,47 @@
 
 This starter kit contains everything you need to begin Project 2.
 
+## Flowchart
+
+```mermaid
+flowchart TB
+    User(["User Prompt"]) -- Triggers run_agent --> PL["Planning Loop <br> agent.py"]
+    State[("Session State <br> {session dict}")] <-- Read / Write State --> PL
+    PL -- "1. Call with query params" --> T1["search_listings(description, size, max_price)"]
+    T1 -- Return list of matches --> PL
+    PL -- Evaluate Results --> C1{"Matches found?"}
+    C1 -- No / Empty List --> E1@{ label: "Set session['error'] <br> Terminate workflow early" }
+    C1 -- Yes --> S1@{ label: "Extract top listing &amp; save to <br> session['selected_item']" }
+    S1 -- "2. Pull item + inject wardrobe" --> T2["suggest_outfit(new_item, wardrobe)"]
+    T2 -- Return styling string --> PL
+    PL --> S2@{ label: "Save text string to <br> session['outfit_suggestion']" } & S3@{ label: "Save caption string to <br> session['fit_card']" }
+    S2 -- "3. Pull suggestion + selected_item" --> T3["create_fit_card(outfit, new_item)"]
+    T3 -- Return caption string --> PL
+    E1 --> UI_Err(["Gradio UI Displays Error Message"])
+    S3 --> UI_Success(["Gradio UI Displays Full Output Panels"])
+
+    E1@{ shape: rect}
+    S1@{ shape: rect}
+    S2@{ shape: rect}
+    S3@{ shape: rect}
+     State:::state
+     T1:::tool
+     C1:::logic
+     E1:::error
+     T2:::tool
+     T3:::tool
+    classDef tool fill:#f9f,stroke:#333,stroke-width:1px
+    classDef state fill:#bbf,stroke:#333,stroke-width:1px
+    classDef error fill:#ffb3b3,stroke:#333,stroke-width:1px
+    classDef logic fill:#fff,stroke:#333,stroke-dasharray: 5 5
+    style State color:#000000
+    style T1 color:#000000
+    style C1 color:#000000
+    style E1 color:#000000
+    style T2 color:#000000
+    style T3 color:#000000
+```
+ 
 ## What's Included
 
 ```
