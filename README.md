@@ -1,7 +1,6 @@
-# FitFindr — Starter Kit
+# FitFindr 
 
-This starter kit contains everything you need to begin Project 2.
-
+A multi-tool AI agent that helps users find secondhand pieces and figure out how to wear them. The agent orchestrates a set of tools in response to a natural language request — searching listings, evaluating fit against an existing wardrobe, and generating a shareable outfit description — while handling the messy reality of what happens when a tool fails or returns nothing useful.
 ## Flowchart
 
 ```mermaid
