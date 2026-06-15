@@ -144,16 +144,24 @@ def suggest_outfit(new_item: dict, wardrobe: dict) -> str:
 
     if not wardrobe_items:
         system_prompt = (
-            "You are an expert personal stylist specializing in streetwear, sustainable fashion, and vintage trends. "
-            "The user wants styling ideas for a secondhand item they found, but their digital wardrobe is empty. "
-            "Provide creative, general styling advice. Suggest what types of garments, silhouettes, textures, and footwear "
-            "would complement this piece. Keep the tone conversational, helpful, and concise (1-2 short paragraphs)."
+            "You are an expert, highly organized personal stylist specializing in streetwear and vintage fashion. "
+            "The user needs styling layouts for a secondhand piece. "
+            "Provide a rigid, bulleted architectural blueprint focusing on general garments, silhouettes, and textures. \n\n"
+            "CRITICAL STRUCTURAL CONSTRAINTS:\n"
+            "1. DO NOT use conversational filler, greetings, or fake excitement (e.g., 'I'm obsessed', 'Great find').\n"
+            "2. DO NOT ask questions at the end. This is a static dashboard report!\n"
+            "3. DO NOT use markdown asterisks (like **). Use ALL CAPS for section headers.\n"
+            "4. Format the output exactly using this template strictly:\n\n"
+            "GENERAL STYLING LAYOUT\n"
+            "- RECOMMENDED SILHOUETTE: [1-2 sentences balancing the item's proportions]\n"
+            "- COMPLEMENTARY TEXTURES: [1-2 sentences on matching fabric weights/textures]\n"
+            "- IDEAL FOOTWEAR CATEGORY: [1-2 sentences grounding the aesthetic look]"
         )
         user_prompt = f"Here is the item I found:\n\n{item_summary}"
     else:
         wardrobe_lines = []
         for item in wardrobe_items:
-            w_title = item.get('title', 'Untitled Piece')
+            w_title = item.get('name', 'Untitled Piece')
             w_cat = item.get('category', 'Clothing')
             w_colors = ", ".join(item.get('colors', [])) if isinstance(item.get('colors'), list) else "N/A"
             wardrobe_lines.append(f"- {w_title} ({w_cat}, Color: {w_colors})")
@@ -161,11 +169,23 @@ def suggest_outfit(new_item: dict, wardrobe: dict) -> str:
         wardrobe_summary = "\n".join(wardrobe_lines)
 
         system_prompt = (
-            "You are an expert personal stylist. Create 1-2 distinct, complete outfit combinations "
-            "by pairing the new item explicitly with named pieces from the user's wardrobe. "
-            "Explain the overall aesthetic vibe of the look (e.g., 90s grunge, retro athletic, minimal chic). "
-            "Be highly specific and practical. Use the exact names of items from their wardrobe."
+            "You are an expert, highly organized digital personal stylist. "
+            "Your job is to output a clean, structured outfit breakdown using the new item and the user's wardrobe. "
+            "Do not write paragraphs of styling essays. Instead, provide a rigid, bulleted blueprint. \n\n"
+            "CRITICAL STRUCTURAL CONSTRAINTS:\n"
+            "1. DO NOT use conversational filler, greetings, or sign-offs.\n"
+            "2. DO NOT use markdown asterisks (like **). Use ALL CAPS for section headers.\n"
+            "3. Format exactly two outfits using the following template strictly:\n\n"
+            "OUTFIT 1: [AESTHETIC NAME]\n"
+            "- NEW ITEM: [Name]\n"
+            "- WARDROBE PIECES: [Comma-separated list of exact matching pieces used]\n"
+            "- HOW TO STYLE: [1-2 sharp, tactical sentences on fit/proportions]\n\n"
+            "OUTFIT 2: [AESTHETIC NAME]\n"
+            "- NEW ITEM: [Name]\n"
+            "- WARDROBE PIECES: [Comma-separated list of exact matching pieces used]\n"
+            "- HOW TO STYLE: [1-2 sharp, tactical sentences on fit/proportions]"
         )
+
         user_prompt = (
             f"Here is the new item I want to buy:\n\n{item_summary}\n\n"
             f"Here is my current wardrobe:\n{wardrobe_summary}"
